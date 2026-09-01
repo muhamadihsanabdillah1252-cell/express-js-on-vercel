@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Status Pesanan — Valley</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0b07; --panel:#17170f; --cream:#ece2c6; --cream-dim:#a99f83;
+    --green:#7c9152; --green-dark:#3a4d28; --gold:#d3ac3f; --danger:#b3543f; --line-dark:#000000;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:var(--bg); color:var(--cream); font-family:'IBM Plex Sans', sans-serif; padding:24px;
+  }
+  .pixel{font-family:'Press Start 2P', monospace;}
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  .card{
+    max-width:420px; width:100%; background:var(--panel); border:2px solid var(--line-dark);
+    box-shadow: inset -3px -3px 0 rgba(0,0,0,0.5), inset 3px 3px 0 rgba(255,255,255,0.09);
+    padding:28px 26px; text-align:center;
+  }
+  h1{ font-family:'Press Start 2P', monospace; font-size:16px; margin:0 0 18px; }
+  .status-badge{
+    display:inline-block; padding:8px 16px; font-family:'IBM Plex Mono', monospace;
+    font-size:12px; font-weight:700; margin-bottom:16px; letter-spacing:0.5px;
+  }
+  .status-UNPAID{ background:#4a3f14; color:var(--gold); }
+  .status-PAID{ background:var(--green-dark); color:#d7ead0; }
+  .status-FAILED, .status-EXPIRED{ background:#3a1e17; color:#f0a898; }
+  .code{
+    font-family:'IBM Plex Mono', monospace; font-size:15px; background:#000;
+    padding:10px; margin:14px 0; letter-spacing:1px; word-break:break-all;
+  }
+  p{ color:var(--cream-dim); font-size:13.5px; line-height:1.7; }
+  a.btn{
+    display:inline-block; margin-top:16px; background:var(--green-dark); color:var(--cream);
+    text-decoration:none; padding:12px 20px; font-family:'IBM Plex Mono', monospace; font-size:12px; border:1px solid var(--line-dark);
+  }
+</style>
+</head>
+<body>
+  <div class="card" id="card">
+    <h1>MEMUAT STATUS...</h1>
+    <p>Mohon tunggu sebentar.</p>
+  </div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const ref = params.get('ref');
+const card = document.getElementById('card');
+
+function render(order){
+  const statusText = {
+    UNPAID: 'MENUNGGU PEMBAYARAN',
+    PAID: 'PEMBAYARAN BERHASIL',
+    FAILED: 'PEMBAYARAN GAGAL',
+    EXPIRED: 'PESANAN KEDALUWARSA',
+    REFUND: 'DANA DIKEMBALIKAN',
+  }[order.status] || order.status;
+
+  const note = {
+    UNPAID: 'Selesaikan pembayaran sesuai instruksi. Halaman ini otomatis update tiap beberapa detik.',
+    PAID: 'Terima kasih! Rank/coin akan dikirim ke akunmu oleh admin dalam waktu singkat.',
+    FAILED: 'Transaksi gagal. Silakan buat pesanan baru di toko.',
+    EXPIRED: 'Batas waktu pembayaran habis. Silakan buat pesanan baru di toko.',
+    REFUND: 'Dana untuk pesanan ini telah dikembalikan.',
+  }[order.status] || '';
+
+  card.innerHTML = `
+    <h1>PESANAN</h1>
+    <div class="code">${order.merchantRef}</div>
+    <div class="status-badge status-${order.status}">${statusText}</div>
+    <p>${note}</p>
+    <a class="btn" href="/">KEMBALI KE TOKO</a>
+  `;
+}
+
+async function poll(){
+  try{
+    const res = await fetch('/api/orders/' + encodeURIComponent(ref));
+    const json = await res.json();
+    if(!json.success){
+      card.innerHTML = `<h1>TIDAK DITEMUKAN</h1><p>Pesanan dengan kode ini tidak ditemukan.</p><a class="btn" href="/">KEMBALI KE TOKO</a>`;
+      return;
+    }
+    render(json.data);
+    if(json.data.status === 'UNPAID'){
+      setTimeout(poll, 5000);
+    }
+  }catch(e){
+    card.innerHTML = `<h1>GAGAL MEMUAT</h1><p>Coba muat ulang halaman ini.</p><a class="btn" href="/">KEMBALI KE TOKO</a>`;
+  }
+}
+
+if(!ref){
+  card.innerHTML = `<h1>KODE TIDAK ADA</h1><p>Kode pesanan tidak ditemukan di URL.</p><a class="btn" href="/">KEMBALI KE TOKO</a>`;
+} else {
+  poll();
+}
+</script>
+</body>
+</html>

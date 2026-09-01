@@ -1,0 +1,2091 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Valley — Toko Server</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0b07;
+    --bg-2:#0f100a;
+    --panel:#17170f;
+    --panel-2:#1f1f14;
+    --panel-3:#26261a;
+    --cream:#ece2c6;
+    --cream-dim:#a99f83;
+    --cream-dimmer:#6f6a58;
+    --green:#7c9152;
+    --green-light:#a3bd6f;
+    --green-dark:#3a4d28;
+    --green-darker:#232e18;
+    --gold:#d3ac3f;
+    --gold-dark:#7d5f1e;
+    --dirt:#6b4a2c;
+    --line-dark:#000000;
+    --line-light:rgba(255,255,255,0.09);
+    --danger:#b3543f;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, rgba(124,145,82,0.10), transparent 60%),
+      var(--bg);
+    color:var(--cream);
+    font-family:'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:74px;
+  }
+  ::selection{background:var(--green-dark); color:var(--cream);}
+  a{color:inherit;}
+  .pixel{font-family:'Press Start 2P', monospace; letter-spacing:0.5px;}
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  .wrap{max-width:1080px; margin:0 auto; padding:0 24px;}
+  img{image-rendering:pixelated;}
+
+  /* ---------- terrain strip: signature element ---------- */
+  .terrain-strip{
+    height:10px;
+    width:100%;
+    background-image:
+      linear-gradient(90deg, var(--green) 0 8px, transparent 0 16px),
+      linear-gradient(90deg, var(--green-dark) 0 16px, transparent 0 32px),
+      var(--dirt);
+    background-size: 16px 5px, 32px 5px, 100% 5px;
+    background-position: 0 0, 0 0, 0 5px;
+    background-repeat: repeat-x;
+  }
+  /* ---------- ANIMATIONS & KEYFRAMES ---------- */
+  @keyframes fadeInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 0 10px rgba(163, 189, 111, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(163, 189, 111, 0.6); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes popIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Apply animations to elements */
+  header { animation: fadeInDown 0.6s ease-out; }
+  .hero { animation: fadeInUp 0.8s ease-out; }
+  .hero .brand-name { animation: float 3s ease-in-out infinite; }
+  .section-head { animation: fadeInUp 0.6s ease-out forwards; opacity: 0; }
+  .card { animation: fadeInUp 0.6s ease-out forwards; opacity: 0; }
+  .info-card { animation: fadeInUp 0.6s ease-out forwards; opacity: 0; }
+
+  .card { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .card:hover {
+    transform: translateY(-8px);
+    box-shadow: inset -3px -3px 0 rgba(0,0,0,0.5), inset 3px 3px 0 var(--line-light), 0 12px 30px rgba(124, 145, 82, 0.25);
+  }
+
+  .btn {
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: inset -2px -2px 0 rgba(0,0,0,0.25), inset 1px 1px 0 var(--line-light), 0 8px 20px rgba(0,0,0,0.3);
+  }
+
+  .btn:active {
+    transform: translateY(1px);
+  }
+
+  .btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+  }
+
+  .btn:active::before {
+    width: 300px;
+    height: 300px;
+  }
+
+  /* Ripple effect */
+  .btn {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(0);
+    animation: ripple-animation 0.6s ease-out;
+    pointer-events: none;
+  }
+
+  @keyframes ripple-animation {
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+
+  .cart-btn { animation: slideInRight 0.6s ease-out; }
+  .cart-btn:hover { transform: scale(1.05); }
+
+  .cart-count {
+    animation: pulse 1.5s ease-in-out infinite;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ip-box {
+    animation: fadeInUp 0.7s ease-out;
+    transition: all 0.3s ease;
+  }
+
+  .ip-box:hover {
+    box-shadow: inset -2px -2px 0 rgba(0,0,0,0.55), inset 2px 2px 0 var(--line-light), 0 0 20px rgba(163, 189, 111, 0.3);
+  }
+
+  .badge {
+    animation: popIn 0.5s ease-out;
+    transition: all 0.3s ease;
+  }
+
+  .badge:hover {
+    transform: scale(1.1);
+    background: var(--panel-2);
+  }
+
+  /* Stagger animations for cards */
+  .grid .card:nth-child(1) { animation-delay: 0.1s; }
+  .grid .card:nth-child(2) { animation-delay: 0.2s; }
+  .grid .card:nth-child(3) { animation-delay: 0.3s; }
+  .grid .card:nth-child(4) { animation-delay: 0.4s; }
+  .grid .card:nth-child(5) { animation-delay: 0.5s; }
+  .grid .card:nth-child(6) { animation-delay: 0.6s; }
+  .grid .card:nth-child(7) { animation-delay: 0.7s; }
+
+  .section-head:nth-of-type(1) { animation-delay: 0.3s; }
+  .section-head:nth-of-type(2) { animation-delay: 0.4s; }
+  .section-head:nth-of-type(3) { animation-delay: 0.5s; }
+
+  /* ---------- header ---------- */
+  header{
+    position:sticky; top:0; z-index:40;
+    background:rgba(10,11,7,0.86);
+    backdrop-filter: blur(10px);
+    border-bottom:2px solid var(--line-dark);
+  }
+  .nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 24px;
+    max-width:1080px; margin:0 auto;
+  }
+  .brand{display:flex; align-items:center; gap:10px; font-family:'Press Start 2P', monospace; font-size:16px; color:var(--green-light);}
+  .navlinks{display:flex; gap:28px; font-size:13.5px; color:var(--cream-dim);}
+  .navlinks a{text-decoration:none; transition:color .15s; cursor:pointer;}
+  .navlinks a:hover{color:var(--green-light);}
+  .navlinks a.active{color:var(--green-light); text-shadow:0 0 8px rgba(163,189,111,0.4);}
+  .cart-btn{
+    display:flex; align-items:center; gap:8px;
+    background:var(--panel-2);
+    border:2px solid var(--line-dark);
+    box-shadow: inset -2px -2px 0 rgba(0,0,0,0.5), inset 2px 2px 0 var(--line-light);
+    color:var(--cream);
+    padding:8px 12px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    cursor:pointer;
+  }
+  .cart-btn:hover{background:var(--panel-3);}
+  .cart-count{
+    background:var(--gold); color:#221a06; font-weight:700;
+    border-radius:2px; padding:1px 6px; font-size:11px;
+  }
+
+  /* ---------- hero ---------- */
+  .hero{
+    padding:76px 24px 56px;
+    text-align:center;
+    position:relative;
+  }
+  .hero .brand-name{
+    font-family:'Press Start 2P', monospace;
+    font-size:48px;
+    color:var(--green-light);
+    margin-bottom:20px;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+    letter-spacing:2px;
+  }
+  .hero p.tag{
+    color:var(--cream-dim);
+    font-size:16px;
+    max-width:560px;
+    margin:14px auto 30px;
+    line-height:1.6;
+  }
+  .ip-box{
+    display:inline-flex; align-items:center; gap:0;
+    background:var(--panel);
+    border:2px solid var(--line-dark);
+    box-shadow: inset -2px -2px 0 rgba(0,0,0,0.55), inset 2px 2px 0 var(--line-light);
+    margin-bottom:16px;
+  }
+  .ip-box .ip-label{
+    font-size:10.5px; color:var(--green-light); padding:12px 16px;
+    border-right:2px solid var(--line-dark);
+  }
+  .ip-box .ip-value{
+    font-family:'IBM Plex Mono', monospace; font-size:15px; padding:12px 16px; letter-spacing:0.5px;
+  }
+  .ip-box button{
+    background:var(--green-dark); color:var(--cream); border:none;
+    border-left:2px solid var(--line-dark);
+    padding:12px 16px; cursor:pointer; font-family:'IBM Plex Mono', monospace; font-size:12px;
+    transition:background .15s;
+  }
+  .ip-box button:hover{background:var(--green);}
+  .badges{
+    display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:26px;
+  }
+  .badge{
+    font-size:11.5px; color:var(--cream-dim);
+    border:1px solid var(--line-light);
+    background:var(--panel);
+    padding:7px 12px;
+  }
+
+  /* ---------- section headers ---------- */
+  .section{padding:64px 24px 20px;}
+  .section-head{max-width:1080px; margin:0 auto 30px;}
+  .eyebrow{
+    font-size:10px; color:var(--gold); margin-bottom:10px; display:block;
+  }
+  .eyebrow.green{color:var(--green-light);}
+  h2.section-title{
+    font-family:'Press Start 2P', monospace;
+    font-size:22px; margin:0 0 10px; color:var(--cream);
+    line-height:1.5;
+  }
+  .section-desc{color:var(--cream-dim); font-size:14.5px; max-width:560px; line-height:1.6;}
+
+  /* ---------- grid & cards ----------
+     Flexbox + fixed card width instead of a 4-col grid: when the last
+     row isn't full (e.g. 7 items), it centers itself symmetrically
+     instead of leaving a lopsided gap on one side. */
+  .grid{
+    max-width:1080px; margin:0 auto;
+    display:flex; flex-wrap:wrap; justify-content:center; gap:16px;
+  }
+  .grid > .card{ flex:0 0 258px; width:258px; }
+  @media (max-width:920px){
+    .grid > .card{ flex:0 0 calc(50% - 8px); width:calc(50% - 8px); }
+  }
+  @media (max-width:560px){
+    .grid > .card{ flex:0 0 100%; width:100%; }
+  }
+
+  /* ---------- custom coin card (full-width elongated bar) ---------- */
+  .card.custom-coin-card{
+    flex:0 0 100% !important;
+    width:100% !important;
+    flex-direction:row;
+    align-items:center;
+    gap:0;
+    padding:0;
+  }
+  .custom-coin-card .card-icon{
+    height:auto; align-self:stretch;
+    border-bottom:none; border-right:2px solid var(--line-dark);
+    padding:18px 26px; flex:0 0 auto;
+  }
+  .custom-coin-card .card-body{
+    flex:1; display:flex; flex-direction:row; flex-wrap:wrap; align-items:center;
+    gap:18px 28px; padding:16px 22px;
+  }
+  .custom-coin-card .cc-meta{ flex:1 1 170px; min-width:150px; }
+  .custom-coin-card .cc-meta .card-name{ margin-bottom:4px; }
+  .custom-coin-card .cc-meta .save-note{ margin:0; }
+  .custom-coin-card .custom-coin-input-wrap{ margin:0; width:150px; }
+  .custom-coin-card .cc-price{
+    min-width:110px; text-align:right;
+  }
+  .custom-coin-card .card-price{ margin:0; }
+  .custom-coin-card .btn{
+    flex:0 0 auto; white-space:nowrap;
+  }
+  @media (max-width:700px){
+    .card.custom-coin-card{ flex-direction:column; }
+    .custom-coin-card .card-icon{
+      border-right:none; border-bottom:2px solid var(--line-dark);
+      width:100%; padding:14px;
+    }
+    .custom-coin-card .card-body{
+      width:100%; flex-direction:column; align-items:stretch;
+    }
+    .custom-coin-card .cc-price{ text-align:left; }
+    .custom-coin-card .btn{ width:100%; }
+  }
+
+  .card{
+    background:var(--panel);
+    border:2px solid var(--line-dark);
+    box-shadow: inset -3px -3px 0 rgba(0,0,0,0.5), inset 3px 3px 0 var(--line-light);
+    display:flex; flex-direction:column;
+    position:relative;
+  }
+  .card.featured{outline:2px solid var(--gold); outline-offset:-2px;}
+  .card-tag{
+    position:absolute; top:-2px; right:12px;
+    background:var(--gold); color:#221a06;
+    font-size:9.5px; font-family:'IBM Plex Mono',monospace; font-weight:700;
+    padding:5px 8px 4px;
+    letter-spacing:0.4px;
+  }
+  .card-tag.discount-tag{
+    right:auto; left:12px;
+    background:var(--danger); color:var(--cream);
+  }
+  .price-row{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .price-old{
+    color:var(--cream-dimmer); text-decoration:line-through;
+    font-size:12.5px; font-family:'IBM Plex Mono',monospace;
+  }
+  .card-icon{
+    height:88px;
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+    border-bottom:2px solid var(--line-dark);
+  }
+  .rank-block{
+    width:42px; height:42px;
+    box-shadow: inset -4px -4px 0 rgba(0,0,0,0.35), inset 4px 4px 0 rgba(255,255,255,0.18);
+  }
+  .coin-stack{
+    width:40px; height:40px; border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, #f3d67a, var(--gold) 55%, var(--gold-dark) 100%);
+    box-shadow: inset -3px -3px 0 rgba(0,0,0,0.25), inset 2px 2px 0 rgba(255,255,255,0.35);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:13px; color:#3a2c07;
+  }
+  .custom-coin-input-wrap{
+    display:flex; align-items:stretch; border:1px solid var(--line-dark);
+    background:var(--panel); margin:2px 0 12px;
+    transition: all 0.2s ease;
+  }
+  .custom-coin-input-wrap:focus-within{
+    border-color: var(--green-light);
+    box-shadow: 0 0 10px rgba(163, 189, 111, 0.3);
+    background: var(--panel-2);
+  }
+  .custom-coin-input-wrap input{
+    flex:1; min-width:0; padding:10px; background:transparent;
+    border:none; color:var(--cream); font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+  }
+  .custom-coin-input-wrap input:focus{outline:none;}
+  .custom-coin-input-wrap input::-webkit-outer-spin-button,
+  .custom-coin-input-wrap input::-webkit-inner-spin-button{
+    -webkit-appearance:none; margin:0;
+  }
+  .custom-coin-input-wrap input[type=number]{-moz-appearance:textfield;}
+  .custom-coin-input-wrap .unit{
+    display:flex; align-items:center; padding:0 10px;
+    color:var(--cream-dim); font-family:'IBM Plex Mono', monospace;
+    font-size:11px; border-left:1px solid var(--line-dark);
+  }
+  .custom-coin-hint{
+    font-size:10.5px; color:var(--cream-dimmer); margin:-6px 0 12px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+
+  .qty-badge{
+    position:absolute; bottom:8px; right:calc(50% - 40px);
+    background:#111; color:var(--cream);
+    font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600;
+    padding:1px 5px; border:1px solid var(--line-light);
+  }
+  .card-body{padding:16px 18px 18px; display:flex; flex-direction:column; flex:1;}
+  .card-name{
+    font-family:'Press Start 2P', monospace; font-size:13px; margin:0 0 10px; letter-spacing:0.5px;
+  }
+  .card-price{
+    font-family:'IBM Plex Mono', monospace; font-size:19px; font-weight:600; color:var(--cream);
+    margin-bottom:4px;
+  }
+  .card-price small{font-size:11px; color:var(--cream-dimmer); font-weight:400;}
+  .save-note{font-size:12px; color:var(--cream-dimmer); margin-bottom:12px;}
+  .perks{
+    list-style:none; padding:0; margin:0 0 12px; font-size:12.5px; color:var(--cream-dim);
+  }
+  .perks li{margin-bottom:8px; position:relative; padding-left:20px;}
+  .perks li:before{content:'✓'; position:absolute; left:0; color:var(--green-light);}
+  .btn{
+    border:2px solid var(--line-dark);
+    background:var(--green-dark);
+    color:var(--cream);
+    padding:10px 16px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    font-weight:600;
+    cursor:pointer;
+    letter-spacing:0.3px;
+    box-shadow: inset -2px -2px 0 rgba(0,0,0,0.25), inset 1px 1px 0 var(--line-light);
+    transition:all .15s;
+  }
+  .btn:hover{background:var(--green);}
+  .btn.block{width:100%; margin-top:auto;}
+  .btn.added{background:var(--gold-dark); color:#221a06;}
+  .btn.gold{background:var(--gold); color:#221a06;}
+  .btn.gold:hover{background:#e8c753;}
+  .btn.ghost{background:transparent; border:2px solid var(--cream-dim); color:var(--cream-dim);}
+  .btn.ghost:hover{border-color:var(--cream); color:var(--cream);}
+  .btn:disabled{opacity:0.5; cursor:not-allowed;}
+
+  /* ---------- TAB SYSTEM ---------- */
+  .tab-container {
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+
+  .rank-tabs {
+    position: relative;
+    display: flex;
+    max-width: 420px;
+    margin: 0 auto 28px;
+    background: var(--panel);
+    border: 2px solid var(--line-dark);
+    border-radius: 10px;
+    padding: 4px;
+    gap: 4px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+  }
+
+  .rank-tabs-indicator {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    height: calc(100% - 8px);
+    background: var(--green-dark);
+    border: 2px solid var(--green-light);
+    border-radius: 6px;
+    transition: transform 0.35s cubic-bezier(.65,0,.35,1);
+    z-index: 0;
+    will-change: transform;
+  }
+
+  .rank-tab {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    padding: 13px 16px;
+    background: transparent;
+    border: none;
+    color: var(--cream-dim);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    text-align: center;
+    border-radius: 6px;
+    transition: color 0.25s ease;
+  }
+
+  .rank-tab:hover {
+    color: var(--cream);
+  }
+
+  .rank-tab.active {
+    color: var(--green-light);
+  }
+
+  .rank-tab-panels,
+  .store-tab-panels,
+  .page-panels {
+    position: relative;
+    overflow: hidden;
+    transition: height 0.35s ease;
+  }
+
+  .rank-tab-panel,
+  .store-tab-panel,
+  .page-panel {
+    display: none;
+    width: 100%;
+  }
+
+  .rank-tab-panel.active,
+  .store-tab-panel.active,
+  .page-panel.active {
+    display: block;
+  }
+
+  .rank-tab-panel.entering,
+  .store-tab-panel.entering,
+  .page-panel.entering {
+    animation: panelFadeIn 0.35s ease-out both;
+  }
+
+  .rank-tab-panel.leaving,
+  .store-tab-panel.leaving,
+  .page-panel.leaving {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    animation: panelFadeOut 0.28s ease-in both;
+  }
+  @keyframes panelFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes panelFadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-6px); }
+  }
+
+  @media (max-width: 560px) {
+    .rank-tabs {
+      max-width: 100%;
+    }
+    .rank-tab {
+      font-size: 9px;
+      padding: 12px 8px;
+    }
+  }
+
+  .store-nav {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 32px 24px 0;
+  }
+  .store-switch {
+    max-width: 380px;
+    margin: 0 auto;
+  }
+  .store-switch .rank-tab {
+    font-size: 12px;
+    padding: 15px 16px;
+  }
+  .rank-tabs.tabs-3 .rank-tabs-indicator{ width:calc(33.333% - 4px); }
+  .rank-tabs.tabs-3.shift-1 .rank-tabs-indicator{ transform:translateX(100%); }
+  .rank-tabs.tabs-3.shift-2 .rank-tabs-indicator{ transform:translateX(200%); }
+  .rank-tabs.tabs-4 .rank-tabs-indicator{ width:calc(25% - 4px); }
+  .rank-tabs.tabs-4.shift-1 .rank-tabs-indicator{ transform:translateX(100%); }
+  .rank-tabs.tabs-4.shift-2 .rank-tabs-indicator{ transform:translateX(200%); }
+  .rank-tabs.tabs-4.shift-3 .rank-tabs-indicator{ transform:translateX(300%); }
+
+  /* ---------- admin page ---------- */
+  .admin-login-wrap{ max-width:380px; margin:0 auto; }
+  .admin-login-card{
+    background:var(--panel); border:2px solid var(--line-dark); padding:26px 24px;
+    box-shadow: inset -3px -3px 0 rgba(0,0,0,0.5), inset 3px 3px 0 rgba(255,255,255,0.09);
+  }
+  .admin-page-body{ max-width:820px; margin:0 auto; }
+  .admin-back-link{
+    display:inline-block; margin-top:18px; color:var(--cream-dimmer); font-size:11px;
+    text-decoration:none; border-bottom:1px dotted var(--cream-dimmer); cursor:pointer;
+  }
+  .admin-back-link:hover{ color:var(--cream); }
+  .admin-list-wrap{ position:relative; overflow:hidden; transition:height 0.35s ease; }
+  .admin-list.leaving{ animation: panelFadeOut 0.2s ease-in both; }
+  .admin-list.entering{ animation: panelFadeIn 0.35s ease-out both; }
+  /* ---------- server info ---------- */
+  .server-info-grid{
+    max-width:1080px; margin:0 auto;
+    display:grid; grid-template-columns:repeat(2, 1fr); gap:16px;
+  }
+  @media (max-width:560px){ .server-info-grid{grid-template-columns:1fr;} }
+  .info-card{
+    background:var(--panel);
+    border:2px solid var(--line-dark);
+    box-shadow: inset -3px -3px 0 rgba(0,0,0,0.5), inset 3px 3px 0 var(--line-light);
+    padding:20px;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
+  }
+  .info-card:hover{
+    transform: translateY(-5px);
+    box-shadow: inset -3px -3px 0 rgba(0,0,0,0.5), inset 3px 3px 0 var(--line-light), 0 10px 25px rgba(124, 145, 82, 0.2);
+  }
+  .info-card h3{
+    font-family:'Press Start 2P', monospace;
+    font-size:13px;
+    margin:0 0 12px;
+    color:var(--green-light);
+    animation: slideInLeft 0.4s ease-out;
+  }
+  .info-card .value{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+    color:var(--cream);
+    line-height:1.6;
+    margin-bottom:10px;
+    animation: slideInRight 0.4s ease-out;
+  }
+  .info-card .label{
+    font-size:11px;
+    color:var(--cream-dimmer);
+    margin-bottom:2px;
+  }
+
+  /* ---------- cart drawer & modal ---------- */
+  .overlay{
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.6);
+    opacity:0; pointer-events:none; transition:opacity .3s ease;
+    z-index:29;
+  }
+  .overlay.show{opacity:1; pointer-events:all;}
+  .cartbar{
+    position:fixed; bottom:0; left:0; right:0;
+    background:var(--panel-2);
+    border-top:2px solid var(--line-dark);
+    padding:12px 24px;
+    display:flex; justify-content:space-between; align-items:center;
+    transform:translateY(100px);
+    transition:transform .3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index:30;
+  }
+  .cartbar.show{transform:translateY(0);}
+  .cartbar-text{font-size:13.5px; font-family:'IBM Plex Mono', monospace;}
+  .cartbar-text .label{color:var(--cream-dim);}
+  .drawer{
+    position:fixed; right:-360px; top:0; bottom:0;
+    width:360px; background:var(--bg-2);
+    border-left:2px solid var(--line-dark);
+    transition:right .35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index:31;
+    display:flex; flex-direction:column;
+    animation: slideInRight 0.35s ease-out;
+  }
+  .drawer.show{right:0;}
+  .drawer-top{
+    padding:20px 24px;
+    border-bottom:2px solid var(--line-dark);
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .drawer-top h3{margin:0; font-family:'Press Start 2P'; font-size:13px; color:var(--cream);}
+  .drawer-close{
+    background:none; border:none; color:var(--cream); cursor:pointer; font-size:18px;
+    transition: all 0.2s ease;
+  }
+  .drawer-close:hover{ transform: scale(1.2) rotate(90deg); }
+  .drawer-items{flex:1; overflow-y:auto; padding:16px 0;}
+  .empty-cart{
+    text-align:center; padding:40px 24px; color:var(--cream-dim);
+    font-size:13px; line-height:1.6;
+    animation: fadeInUp 0.5s ease-out;
+  }
+  .drawer-item{
+    display:flex; align-items:center; gap:12px;
+    padding:12px 16px; border-bottom:1px solid var(--line-light);
+    animation: slideInLeft 0.3s ease-out;
+    transition: all 0.2s ease;
+  }
+  .drawer-item:hover{
+    background: rgba(163, 189, 111, 0.1);
+  }
+  .di-icon{
+    width:40px; height:40px; background:var(--panel);
+    border:1px solid var(--line-dark);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    transition: all 0.2s ease;
+  }
+  .drawer-item:hover .di-icon{
+    box-shadow: 0 0 15px rgba(163, 189, 111, 0.3);
+  }
+  .di-icon.coin{background: radial-gradient(circle at 35% 30%, #f3d67a, var(--gold) 55%, var(--gold-dark) 100%); color:#3a2c07; font-weight:700;}
+  .di-info{flex:1; min-width:0;}
+  .di-name{font-size:12px; font-weight:600; margin-bottom:2px;}
+  .di-price{font-family:'IBM Plex Mono'; font-size:13px; color:var(--green-light);}
+  .di-qty{
+    display:flex; gap:6px; align-items:center;
+  }
+  .qtybtn{
+    width:24px; height:24px; background:var(--green-dark);
+    border:1px solid var(--line-dark); color:var(--cream);
+    cursor:pointer; font-size:12px; font-weight:700;
+    transition: all 0.15s ease;
+  }
+  .qtybtn:hover{background:var(--green); transform: scale(1.1);}
+  .di-remove{
+    background:var(--danger); border:1px solid var(--line-dark);
+    color:var(--cream); padding:4px 8px; font-size:10px; cursor:pointer;
+    transition: all 0.15s ease;
+  }
+  .di-remove:hover{ transform: scale(1.05); filter: brightness(1.2); }
+  .drawer-bottom{
+    padding:16px 24px; border-top:2px solid var(--line-dark);
+    animation: slideInUp 0.3s ease-out;
+  }
+  .drawer-summary{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px; margin-bottom:12px;
+    text-align:right;
+  }
+  .drawer-summary .label{color:var(--cream-dim);}
+  .drawer-summary .total{font-size:16px; color:var(--gold); font-weight:700;}
+  .checkoutBtn{width:100%;}
+
+  /* ---------- modal ---------- */
+  .modal-overlay{
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.8);
+    display:none; align-items:center; justify-content:center;
+    z-index:50;
+    animation: fadeInDown 0.3s ease-out;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal{
+    background:var(--bg-2);
+    border:2px solid var(--line-dark);
+    box-shadow: 0 0 60px rgba(0,0,0,0.8), 0 0 30px rgba(163, 189, 111, 0.2);
+    max-width:500px; width:90%;
+    max-height:90vh; overflow-y:auto;
+    animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .modal-head{
+    padding:20px 24px;
+    border-bottom:2px solid var(--line-dark);
+    position: relative;
+  }
+  .modal-head h2{
+    font-family:'Press Start 2P'; font-size:16px;
+    margin:0; color:var(--cream);
+  }
+  .modal-body{padding:24px;}
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block; font-size:11px; color:var(--gold);
+    margin-bottom:6px; font-weight:600;
+  }
+  .field input, .field select{
+    width:100%; padding:10px; background:var(--panel);
+    border:1px solid var(--line-dark);
+    color:var(--cream); font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    transition: all 0.2s ease;
+  }
+  .field input:focus, .field select:focus{
+    outline:none;
+    border-color: var(--green-light);
+    box-shadow: 0 0 10px rgba(163, 189, 111, 0.3);
+    background: var(--panel-2);
+  }
+  .field input::placeholder, .field select{color:var(--cream-dim);}
+  .order-summary{
+    background:var(--panel);
+    border:1px solid var(--line-dark);
+    padding:12px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--cream-dim);
+    white-space:pre-wrap;
+    margin:16px 0;
+    animation: fadeInUp 0.4s ease-out;
+  }
+  .note{font-size:12px; color:var(--cream-dim); line-height:1.6;}
+
+  /* ---------- admin panel ---------- */
+  .admin-row{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 0; border-bottom:1px solid var(--line-light);
+  }
+  .admin-row:last-child{border-bottom:none;}
+  .admin-row .ar-name{ flex:1 1 auto; font-size:13px; }
+  .admin-row .ar-name small{ display:block; color:var(--cream-dim); font-size:11px; font-family:'IBM Plex Mono',monospace; }
+  .admin-row input[type="number"]{
+    width:64px; background:var(--panel); border:1px solid var(--line-dark);
+    color:var(--cream); padding:7px 6px; font-family:'IBM Plex Mono',monospace; font-size:12px;
+  }
+  .admin-row input[type="text"]{
+    width:96px; background:var(--panel); border:1px solid var(--line-dark);
+    color:var(--cream); padding:7px 6px; font-family:'IBM Plex Mono',monospace; font-size:12px;
+  }
+  .admin-row .ar-save{
+    background:var(--green-dark); color:var(--cream); border:1px solid var(--line-dark);
+    padding:7px 10px; cursor:pointer; font-family:'IBM Plex Mono',monospace; font-size:11px;
+  }
+  .admin-row .ar-save:hover{background:var(--green);}
+  .admin-row .ar-clear{
+    background:none; color:var(--cream-dimmer); border:1px solid var(--line-light);
+    padding:7px 8px; cursor:pointer; font-family:'IBM Plex Mono',monospace; font-size:11px;
+  }
+  .admin-row .ar-clear:hover{color:var(--danger); border-color:var(--danger);}
+  .admin-tabs{ display:flex; gap:8px; margin-bottom:14px; }
+  .admin-tabs button{
+    flex:1; padding:9px; background:var(--panel); border:1px solid var(--line-dark);
+    color:var(--cream-dim); cursor:pointer; font-family:'IBM Plex Mono',monospace; font-size:11.5px;
+  }
+  .admin-tabs button.active{ background:var(--green-dark); color:var(--cream); }
+  .admin-list{ max-height:340px; overflow-y:auto; padding-right:4px; }
+  .success{text-align:center; animation: fadeInUp 0.4s ease-out;}
+  .ok{font-size:48px; margin:20px 0; animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);}
+  .success h4{font-family:'Press Start 2P'; font-size:16px; margin:0 0 12px; color:var(--cream); animation: slideInDown 0.4s ease-out;}
+  .success p{color:var(--cream-dim); margin:8px 0;}
+  .code{
+    background:var(--panel);
+    border:2px solid var(--gold);
+    padding:12px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:18px;
+    color:var(--gold);
+    font-weight:700;
+    margin:16px 0;
+    letter-spacing:2px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  /* ---------- footer ---------- */
+  footer{
+    margin-top:80px;
+    padding:40px 24px;
+    text-align:center;
+    color:var(--cream-dim);
+    font-size:12px;
+    border-top:2px solid var(--line-dark);
+    animation: fadeInUp 0.8s ease-out;
+  }
+  footer p{
+    margin:8px 0;
+    transition: color 0.3s ease;
+  }
+  footer p:hover{
+    color: var(--green-light);
+  }
+
+  /* Scroll indicator animation */
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Loading animation for checking out */
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* Section animations */
+  .section {
+    animation: fadeInUp 0.8s ease-out;
+  }
+
+  /* Hover glow for badges */
+  .badge {
+    position: relative;
+  }
+
+  .badge::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border: 1px solid var(--line-light);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .badge:hover::after {
+    opacity: 1;
+    animation: glow 1s ease-in-out;
+  }
+</style>
+</head>
+<body>
+
+<div class="terrain-strip"></div>
+
+<header>
+  <nav class="nav">
+    <div class="brand">VALLEY</div>
+    <div class="navlinks">
+      <a class="active" id="navBtn-home" onclick="switchPage('home')">HOME</a>
+      <a id="navBtn-store" onclick="switchPage('store')">STORE</a>
+    </div>
+    <button class="cart-btn" onclick="openDrawer()">🛒 KERANJANG <span class="cart-count" id="cartCount">0</span></button>
+  </nav>
+</header>
+
+<div class="terrain-strip small"></div>
+
+<div class="page-panels" id="pagePanels">
+  <div class="page-panel active" id="page-home">
+
+    <section class="hero">
+      <div class="brand-name">VALLEY</div>
+      <p class="tag">Server Minecraft dengan komunitas yang supportif. Nikmati pengalaman bermain dengan fitur eksklusif dan staff yang responsif.</p>
+      
+      <div class="ip-box">
+        <span class="ip-label">SERVER IP</span>
+        <span class="ip-value" id="ipValue">valleypride.my.id</span>
+        <button onclick="copyIP()" id="copyBtn">SALIN</button>
+      </div>
+      
+      <div class="ip-box">
+        <span class="ip-label">PORT</span>
+        <span class="ip-value" id="portValue">24103</span>
+        <button onclick="copyPort()" id="copyPortBtn">SALIN</button>
+      </div>
+
+      <div class="badges">
+        <div class="badge">🟢 ONLINE</div>
+        <div class="badge">⭐ 1.21.4</div>
+        <div class="badge">👥 Anarky & Eco</div>
+      </div>
+    </section>
+
+    <div class="terrain-strip small"></div>
+
+    <!-- Server Information Section -->
+    <section class="section" id="serverSection">
+      <div class="section-head">
+        <span class="eyebrow">INFORMASI</span>
+        <h2 class="section-title">Info Server</h2>
+      </div>
+      <div class="server-info-grid">
+        <div class="info-card">
+          <h3>📍 KONEKSI</h3>
+          <div class="label">Server IP</div>
+          <div class="value">valleypride.my.id</div>
+          <div class="label">Port</div>
+          <div class="value">24103</div>
+          <div class="label">Versi</div>
+          <div class="value">1.21.4 - Latest</div>
+        </div>
+        <div class="info-card">
+          <h3>⚙️ SPESIFIKASI</h3>
+          <div class="label">Tipe Server</div>
+          <div class="value">Anarky & Eco</div>
+          <div class="label">Max Players</div>
+          <div class="value">100+</div>
+          <div class="label">RAM</div>
+          <div class="value">12GB</div>
+        </div>
+        <div class="info-card">
+          <h3>✨ FITUR</h3>
+          <div class="value">
+            ✓ SellWand<br>
+            ✓ Tags Player <br>
+            ✓ Economy System<br>
+            ✓ PvP Arena<br>
+            ✓ Mini Games<br>
+            ✓ Auction House <br>
+            ✓ Dll.
+          </div>
+        </div>
+        <div class="info-card">
+          <h3>👥 KOMUNITAS</h3>
+          <div class="value">
+            ✓ Staff<br>
+            ✓ Discord Active<br>
+            ✓ Event Mingguan<br>
+            ✓ Forum Support<br>
+            ✓ Kompetisi Regular
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="terrain-strip small"></div>
+
+    <!-- Bug Report & Suggestions Section -->
+    <section class="section" id="reportSection">
+      <div class="section-head">
+        <span class="eyebrow">FEEDBACK</span>
+        <h2 class="section-title">Laporan Bug & Saran</h2>
+        <p class="section-desc">Temukan bug? Punya ide? Bantu kami membuat server lebih baik dengan laporan atau saran kamu.</p>
+      </div>
+      <div style="max-width:1080px; margin:0 auto;">
+        <button class="btn gold" onclick="openReportModal('bug')" style="width:100%; padding:16px; font-size:14px; margin-bottom:12px;">
+          🐛 LAPORKAN BUG
+        </button>
+        <button class="btn ghost" onclick="openReportModal('suggestion')" style="width:100%; padding:16px; font-size:14px;">
+          💡 BERI SARAN / UPDATE
+        </button>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="page-panel" id="page-store">
+
+    <div class="store-nav">
+      <div class="rank-tabs store-switch" role="tablist">
+        <div class="rank-tabs-indicator" id="storeTabIndicator"></div>
+        <button class="rank-tab active" id="storeTabBtn-rank" role="tab" aria-selected="true" onclick="switchStoreTab('rank')">🛡️ RANK</button>
+        <button class="rank-tab" id="storeTabBtn-coin" role="tab" aria-selected="false" onclick="switchStoreTab('coin')">🪙 COIN</button>
+      </div>
+    </div>
+
+    <div class="store-tab-panels" id="storeTabPanels">
+      <div class="store-tab-panel active" id="storeTab-rank">
+        <section class="section" style="padding-top:36px;">
+          <div class="section-head">
+            <span class="eyebrow">RANK & ITEM</span>
+            <h2 class="section-title">Upgrade Rank</h2>
+            <p class="section-desc">Tingkatkan rank kamu dan dapatkan berbagai privilege eksklusif.</p>
+          </div>
+          <div class="rank-tabs" role="tablist">
+            <div class="rank-tabs-indicator" id="rankTabIndicator"></div>
+            <button class="rank-tab active" id="rankTabBtn-permanent" role="tab" aria-selected="true" onclick="switchRankTab('permanent')">PERMANEN</button>
+            <button class="rank-tab" id="rankTabBtn-monthly" role="tab" aria-selected="false" onclick="switchRankTab('monthly')">PER BULAN</button>
+          </div>
+          <div class="rank-tab-panels" id="rankTabPanels">
+            <div class="rank-tab-panel active" id="rankTab-permanent">
+              <div class="grid" id="rankGrid"></div>
+            </div>
+            <div class="rank-tab-panel" id="rankTab-monthly">
+              <div class="grid" id="rankGridMonthly"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="store-tab-panel" id="storeTab-coin">
+        <section class="section" style="padding-top:36px;">
+          <div class="section-head">
+            <span class="eyebrow green">CURRENCY</span>
+            <h2 class="section-title">Beli Coin</h2>
+            <p class="section-desc">Coin bisa dipakai untuk berbagai kebutuhan di server.</p>
+          </div>
+          <div class="grid" id="coinGrid"></div>
+        </section>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="page-panel" id="page-admin">
+    <section class="section" style="padding-top:36px;">
+      <div class="section-head">
+        <span class="eyebrow gold">ADMIN</span>
+        <h2 class="section-title">Panel Admin</h2>
+        <p class="section-desc">Kelola diskon rank &amp; coin, dan pantau pesanan masuk.</p>
+      </div>
+
+      <div id="adminLoginSection" class="admin-login-wrap">
+        <div class="admin-login-card">
+          <div class="field">
+            <label>USERNAME</label>
+            <input type="text" id="adminUser" placeholder="Username admin">
+          </div>
+          <div class="field">
+            <label>PASSWORD</label>
+            <input type="password" id="adminPass" placeholder="Password admin">
+          </div>
+          <button class="btn gold block" onclick="doAdminLogin()">MASUK</button>
+          <p class="note" id="adminLoginNote">Login untuk mengatur diskon rank &amp; coin, dan memantau pesanan.</p>
+        </div>
+      </div>
+
+      <div id="adminContentSection" style="display:none;">
+        <div class="rank-tabs tabs-4" role="tablist" style="max-width:640px;">
+          <div class="rank-tabs-indicator" id="adminTabIndicator"></div>
+          <button class="rank-tab active" id="adminTabBtn-rank" role="tab" aria-selected="true" onclick="switchAdminTab('rank')">DISKON RANK</button>
+          <button class="rank-tab" id="adminTabBtn-coin" role="tab" aria-selected="false" onclick="switchAdminTab('coin')">DISKON COIN</button>
+          <button class="rank-tab" id="adminTabBtn-orders" role="tab" aria-selected="false" onclick="switchAdminTab('orders')">PESANAN</button>
+          <button class="rank-tab" id="adminTabBtn-reports" role="tab" aria-selected="false" onclick="switchAdminTab('reports')">LAPORAN</button>
+        </div>
+
+        <div class="admin-page-body">
+          <div class="admin-list-wrap" id="adminListWrap">
+            <div class="admin-list" id="adminList">Memuat…</div>
+          </div>
+          <p class="note" style="margin-top:16px;">Diskon berlaku otomatis di toko &amp; keranjang untuk item baru. Data tersimpan di database server (bukan browser).</p>
+          <div style="text-align:right; margin-top:14px;">
+            <button class="btn ghost" onclick="doAdminLogout()">LOGOUT</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:center;">
+        <a class="admin-back-link" onclick="switchPage('home')">← Kembali ke Toko</a>
+      </div>
+    </section>
+  </div>
+</div>
+
+<footer>
+  <p>&copy; 2024 Valley Server. All rights reserved.</p>
+  <p>Dibuat dengan ❤️ untuk komunitas.</p>
+  <p style="margin-top:10px;"><a href="#" onclick="switchPage('admin'); renderAdminPage(); return false;" style="color:var(--cream-dimmer); font-size:11px; text-decoration:none; border-bottom:1px dotted var(--cream-dimmer);">Admin</a></p>
+</footer>
+
+<!-- Cart Drawer -->
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-top">
+    <h3>KERANJANG</h3>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-items" id="drawerItems">
+    <div class="empty-cart">Keranjangmu masih kosong.<br>Pilih rank atau coin di atas.</div>
+  </div>
+  <div class="drawer-bottom">
+    <div class="drawer-summary">
+      <div class="label">TOTAL</div>
+      <div class="total" id="drawerTotal">Rp0</div>
+    </div>
+    <button class="btn gold block" id="checkoutBtn" onclick="openCheckout()">CHECKOUT</button>
+  </div>
+</div>
+
+<!-- Modal Checkout & Report -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target === this) closeCheckout()">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modalTitle">CHECKOUT</h2>
+      <button class="drawer-close" style="position:absolute; right:20px; top:20px;" onclick="closeCheckout()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   Valley Store — data-driven frontend
+   Products, discounts & checkout all go through the backend
+   API instead of being hardcoded in this file.
+   ========================================================= */
+
+const API = '/api';
+let PRODUCTS = { rank: [], coin: [] };
+
+function fmtRp(val){
+  return new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', minimumFractionDigits:0}).format(val);
+}
+
+async function apiFetch(path, opts = {}){
+  const token = localStorage.getItem('valley_admin_token');
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (token && path.startsWith('/admin')) headers.Authorization = 'Bearer ' + token;
+  const res = await fetch(API + path, { ...opts, headers });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw Object.assign(new Error(data.message || 'Request gagal'), { data, status: res.status });
+  return data;
+}
+
+async function loadProducts(){
+  const { data } = await apiFetch('/products');
+  PRODUCTS.rank = data.filter(p => p.type === 'rank').sort((a,b) => a.sortOrder - b.sortOrder);
+  PRODUCTS.coin = data.filter(p => p.type === 'coin').sort((a,b) => a.sortOrder - b.sortOrder);
+}
+
+function priceBlock(price, priceFinal, discount, unitLabel){
+  if (!discount){
+    return `<div class="card-price">${fmtRp(price)} ${unitLabel ? `<small>${unitLabel}</small>` : ''}</div>`;
+  }
+  return `<div class="price-row">
+    <span class="price-old">${fmtRp(price)}</span>
+    <span class="card-price" style="margin:0;">${fmtRp(priceFinal)} ${unitLabel ? `<small>${unitLabel}</small>` : ''}</span>
+  </div>`;
+}
+
+function renderRanks(){
+  const grid = document.getElementById('rankGrid');
+  grid.innerHTML = PRODUCTS.rank.map(r => `
+    <div class="card">
+      ${r.permTag ? `<div class="card-tag">${r.permTag}</div>` : ''}
+      ${r.discount ? `<div class="card-tag discount-tag">${r.discount.label}</div>` : ''}
+      <div class="card-icon">
+        <div class="rank-block" style="background:${r.color};"></div>
+      </div>
+      <div class="card-body">
+        <div class="card-name">${r.name}</div>
+        ${priceBlock(r.price, r.priceFinal, r.discount, '/ permanen')}
+        <ul class="perks">${r.perks.map(p => `<li>${p}</li>`).join('')}</ul>
+        <button class="btn block" id="btn-${r.id}" onclick="toggleRank('${r.id}','permanent')">+ Tambah ke Keranjang</button>
+      </div>
+    </div>
+  `).join('');
+
+  const gridMonthly = document.getElementById('rankGridMonthly');
+  gridMonthly.innerHTML = PRODUCTS.rank.map(r => `
+    <div class="card">
+      ${r.monthTag ? `<div class="card-tag">${r.monthTag}</div>` : ''}
+      ${r.discount ? `<div class="card-tag discount-tag">${r.discount.label}</div>` : ''}
+      <div class="card-icon">
+        <div class="rank-block" style="background:${r.color};"></div>
+      </div>
+      <div class="card-body">
+        <div class="card-name">${r.name}</div>
+        ${priceBlock(r.priceMonthly, r.priceMonthlyFinal, r.discount, '/ bulan')}
+        <ul class="perks">${r.perks.map(p => `<li>${p}</li>`).join('')}</ul>
+        <button class="btn block" id="btn-${r.id}-monthly" onclick="toggleRank('${r.id}','monthly')">+ Tambah ke Keranjang</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderCoins(){
+  const grid = document.getElementById('coinGrid');
+  grid.innerHTML = PRODUCTS.coin.map(c => `
+    <div class="card">
+      ${c.tag ? `<div class="card-tag">${c.tag}</div>` : ''}
+      ${c.discount ? `<div class="card-tag discount-tag">${c.discount.label}</div>` : ''}
+      <div class="card-icon">
+        <div class="coin-stack">${c.qty}</div>
+      </div>
+      <div class="card-body">
+        <div class="card-name">${c.name}</div>
+        ${priceBlock(c.price, c.priceFinal, c.discount, '')}
+        <div class="save-note">Kurs: Rp10/coin</div>
+        <ul class="perks">${c.perks.map(p => `<li>${p}</li>`).join('')}</ul>
+        <button class="btn block" onclick="addCoin('${c.id}')">+ Tambah ke Keranjang</button>
+      </div>
+    </div>
+  `).join('') + `
+    <div class="card custom-coin-card">
+      <div class="card-icon">
+        <div class="coin-stack">?</div>
+      </div>
+      <div class="card-body">
+        <div class="cc-meta">
+          <div class="card-name">CUSTOM</div>
+          <div class="save-note">Kurs: Rp10/coin • Min. 100 coin</div>
+        </div>
+        <div class="custom-coin-input-wrap">
+          <input type="number" id="customCoinInput" min="100" step="10" value="100" oninput="updateCustomCoinPrice()">
+          <span class="unit">coin</span>
+        </div>
+        <div class="cc-price">
+          <div class="card-price" id="customCoinPrice">Rp0</div>
+        </div>
+        <button class="btn" onclick="addCustomCoin()">+ Tambah ke Keranjang</button>
+      </div>
+    </div>
+  `;
+  updateCustomCoinPrice();
+}
+
+function updateCustomCoinPrice(){
+  const input = document.getElementById('customCoinInput');
+  const priceEl = document.getElementById('customCoinPrice');
+  if(!input || !priceEl) return;
+  let qty = parseInt(input.value, 10);
+  if(isNaN(qty) || qty < 0) qty = 0;
+  priceEl.textContent = fmtRp(qty * 10);
+}
+
+/* ---------- page / tab navigation (unchanged behaviour from static version) ---------- */
+let currentPage = 'home';
+let pageAnimating = false;
+function switchPage(page){
+  if (page === currentPage || pageAnimating) return;
+  pageAnimating = true;
+  document.getElementById('navBtn-home').classList.toggle('active', page === 'home');
+  document.getElementById('navBtn-store').classList.toggle('active', page === 'store');
+  const panels = document.getElementById('pagePanels');
+  const oldPanel = document.getElementById('page-' + currentPage);
+  const newPanel = document.getElementById('page-' + page);
+  panels.style.height = panels.offsetHeight + 'px';
+  oldPanel.classList.remove('entering');
+  oldPanel.classList.add('leaving');
+  newPanel.classList.add('active', 'entering');
+  requestAnimationFrame(() => { panels.style.height = newPanel.scrollHeight + 'px'; });
+  const cleanup = () => {
+    oldPanel.classList.remove('active', 'leaving');
+    newPanel.classList.remove('entering');
+    panels.style.height = '';
+    currentPage = page;
+    pageAnimating = false;
+  };
+  clearTimeout(switchPage._t);
+  switchPage._t = setTimeout(cleanup, 360);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goToSection(id){
+  if (currentPage !== 'home'){
+    switchPage('home');
+    setTimeout(() => { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 380);
+  } else {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+let currentStoreTab = 'rank';
+let storeTabAnimating = false;
+function switchStoreTab(tab){
+  if (tab === currentStoreTab || storeTabAnimating) return;
+  storeTabAnimating = true;
+  const indicator = document.getElementById('storeTabIndicator');
+  indicator.style.transform = tab === 'coin' ? 'translateX(100%)' : 'translateX(0)';
+  document.getElementById('storeTabBtn-rank').classList.toggle('active', tab === 'rank');
+  document.getElementById('storeTabBtn-coin').classList.toggle('active', tab === 'coin');
+  document.getElementById('storeTabBtn-rank').setAttribute('aria-selected', tab === 'rank');
+  document.getElementById('storeTabBtn-coin').setAttribute('aria-selected', tab === 'coin');
+  const panels = document.getElementById('storeTabPanels');
+  const oldPanel = document.getElementById('storeTab-' + currentStoreTab);
+  const newPanel = document.getElementById('storeTab-' + tab);
+  panels.style.height = panels.offsetHeight + 'px';
+  oldPanel.classList.remove('entering');
+  oldPanel.classList.add('leaving');
+  newPanel.classList.add('active', 'entering');
+  requestAnimationFrame(() => { panels.style.height = newPanel.scrollHeight + 'px'; });
+  const cleanup = () => {
+    oldPanel.classList.remove('active', 'leaving');
+    newPanel.classList.remove('entering');
+    panels.style.height = '';
+    currentStoreTab = tab;
+    storeTabAnimating = false;
+  };
+  clearTimeout(switchStoreTab._t);
+  switchStoreTab._t = setTimeout(cleanup, 360);
+}
+
+let currentRankTab = 'permanent';
+let rankTabAnimating = false;
+function switchRankTab(tab){
+  if (tab === currentRankTab || rankTabAnimating) return;
+  rankTabAnimating = true;
+  const indicator = document.getElementById('rankTabIndicator');
+  indicator.style.transform = tab === 'monthly' ? 'translateX(100%)' : 'translateX(0)';
+  document.getElementById('rankTabBtn-permanent').classList.toggle('active', tab === 'permanent');
+  document.getElementById('rankTabBtn-monthly').classList.toggle('active', tab === 'monthly');
+  document.getElementById('rankTabBtn-permanent').setAttribute('aria-selected', tab === 'permanent');
+  document.getElementById('rankTabBtn-monthly').setAttribute('aria-selected', tab === 'monthly');
+  const panels = document.getElementById('rankTabPanels');
+  const oldPanel = document.getElementById('rankTab-' + currentRankTab);
+  const newPanel = document.getElementById('rankTab-' + tab);
+  panels.style.height = panels.offsetHeight + 'px';
+  oldPanel.classList.remove('entering');
+  oldPanel.classList.add('leaving');
+  newPanel.classList.add('active', 'entering');
+  requestAnimationFrame(() => { panels.style.height = newPanel.scrollHeight + 'px'; });
+  const cleanup = () => {
+    oldPanel.classList.remove('active', 'leaving');
+    newPanel.classList.remove('entering');
+    panels.style.height = '';
+    currentRankTab = tab;
+    rankTabAnimating = false;
+  };
+  clearTimeout(switchRankTab._t);
+  switchRankTab._t = setTimeout(cleanup, 360);
+}
+
+/* ---------- cart ---------- */
+let cart = {};
+
+function toggleRank(id, mode){
+  const isMonthly = mode === 'monthly';
+  const cartId = isMonthly ? id + '-monthly' : id;
+  const btn = document.getElementById(isMonthly ? 'btn-'+id+'-monthly' : 'btn-'+id);
+  if(cart[cartId]){
+    delete cart[cartId];
+    btn.textContent = '+ Tambah ke Keranjang';
+    btn.classList.remove('added');
+  } else {
+    const rank = PRODUCTS.rank.find(r => r.id === id);
+    const price = isMonthly ? rank.priceMonthlyFinal : rank.priceFinal;
+    const name = rank.name + (isMonthly ? ' (Bulanan)' : '');
+    cart[cartId] = { ref: { id, mode: isMonthly ? 'monthly' : 'permanent', type:'rank', name, price, color: rank.color }, qty: 1 };
+    btn.textContent = '✓ Di Keranjang';
+    btn.classList.add('added');
+  }
+  syncCart();
+}
+
+function addCoin(id){
+  const coin = PRODUCTS.coin.find(c => c.id === id);
+  if(cart[id]){
+    cart[id].qty += 1;
+  } else {
+    cart[id] = { ref: { id, type:'coin', name: coin.name, price: coin.priceFinal }, qty: 1 };
+  }
+  syncCart();
+  openDrawer();
+}
+
+function addCustomCoin(){
+  const input = document.getElementById('customCoinInput');
+  let qty = parseInt(input.value, 10);
+  if(isNaN(qty) || qty < 100) qty = 100;
+  input.value = qty;
+  updateCustomCoinPrice();
+
+  const cartId = 'custom-coin';
+  if(cart[cartId] && cart[cartId].ref.qty === qty){
+    cart[cartId].qty += 1;
+  } else {
+    cart[cartId] = {
+      ref: { id:'custom-coin', type:'coin', name: qty.toLocaleString('id-ID') + ' COIN (Custom)', price: qty * 10, qty },
+      qty: 1,
+    };
+  }
+  syncCart();
+  openDrawer();
+}
+
+function changeQty(id, delta){
+  const item = cart[id];
+  if(!item) return;
+  item.qty += delta;
+  if(item.qty <= 0){ removeItem(id); return; }
+  syncCart();
+}
+
+function removeItem(id){
+  delete cart[id];
+  const rank = PRODUCTS.rank.find(r => id === r.id || id === r.id + '-monthly');
+  if(rank){
+    const isMonthly = id.endsWith('-monthly');
+    const btn = document.getElementById(isMonthly ? 'btn-'+rank.id+'-monthly' : 'btn-'+rank.id);
+    if(btn){ btn.textContent = '+ Tambah ke Keranjang'; btn.classList.remove('added'); }
+  }
+  syncCart();
+}
+
+function getTotal(){ return Object.values(cart).reduce((sum, it) => sum + it.ref.price * it.qty, 0); }
+function getCount(){ return Object.values(cart).reduce((sum, it) => sum + it.qty, 0); }
+
+function syncCart(){
+  const total = getTotal();
+  const count = getCount();
+  document.getElementById('cartCount').textContent = count;
+  document.getElementById('barCount').textContent = count;
+  document.getElementById('barTotal').textContent = fmtRp(total);
+  document.getElementById('drawerTotal').textContent = fmtRp(total);
+
+  const bar = document.getElementById('cartbar');
+  if(count > 0){ bar.classList.add('show'); } else { bar.classList.remove('show'); }
+
+  const container = document.getElementById('drawerItems');
+  const entries = Object.entries(cart);
+  if(entries.length === 0){
+    container.innerHTML = '<div class="empty-cart">Keranjangmu masih kosong.<br>Pilih rank atau coin di atas.</div>';
+  } else {
+    container.innerHTML = entries.map(([id, it]) => {
+      const isCoin = it.ref.type === 'coin';
+      const iconInner = isCoin ? '$' : '';
+      const iconStyle = isCoin ? '' : `style="background:${it.ref.color};"`;
+      return `
+      <div class="drawer-item">
+        <div class="di-icon ${isCoin?'coin':''}" ${iconStyle}></div>
+        <div class="di-info">
+          <div class="di-name">${it.ref.name}</div>
+          <div class="di-price">${fmtRp(it.ref.price)} ${isCoin?('&times; '+it.qty):''}</div>
+        </div>
+        ${isCoin ? `
+        <div class="di-qty">
+          <button class="qtybtn" onclick="changeQty('${id}',-1)">-</button>
+          <span class="mono" style="font-size:12px;">${it.qty}</span>
+          <button class="qtybtn" onclick="changeQty('${id}',1)">+</button>
+        </div>` : ''}
+        <button class="di-remove" onclick="removeItem('${id}')">HAPUS</button>
+      </div>`;
+    }).join('');
+  }
+
+  const checkoutBtn = document.getElementById('checkoutBtn');
+  checkoutBtn.disabled = entries.length === 0;
+}
+
+function openDrawer(){
+  document.getElementById('drawer').classList.add('show');
+  document.getElementById('overlay').classList.add('show');
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('show');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+function copyIP(){
+  const val = document.getElementById('ipValue').textContent;
+  const btn = document.getElementById('copyBtn');
+  navigator.clipboard && navigator.clipboard.writeText(val).catch(()=>{});
+  const old = btn.textContent;
+  btn.textContent = 'TERSALIN!';
+  setTimeout(()=> btn.textContent = old, 1500);
+}
+function copyPort(){
+  const val = document.getElementById('portValue').textContent;
+  const btn = document.getElementById('copyPortBtn');
+  navigator.clipboard && navigator.clipboard.writeText(val).catch(()=>{});
+  const old = btn.textContent;
+  btn.textContent = 'TERSALIN!';
+  setTimeout(()=> btn.textContent = old, 1500);
+}
+
+/* ---------- checkout (real backend + Tripay) ---------- */
+async function openCheckout(){
+  if(Object.keys(cart).length === 0) return;
+  const overlay = document.getElementById('modalOverlay');
+  document.getElementById('modalTitle').textContent = 'CHECKOUT';
+
+  const summaryLines = Object.values(cart).map(it => {
+    const isCoin = it.ref.type === 'coin';
+    return `${it.ref.name}${isCoin ? ' x'+it.qty : ''} — ${fmtRp(it.ref.price * it.qty)}`;
+  }).join('\n');
+  const total = getTotal();
+
+  document.getElementById('modalBody').innerHTML = `
+    <div class="field">
+      <label>USERNAME MINECRAFT</label>
+      <input type="text" id="mcUsername" placeholder="Contoh: Steve_ID">
+    </div>
+    <div class="field">
+      <label>KONTAK (WHATSAPP / DISCORD)</label>
+      <input type="text" id="mcContact" placeholder="Contoh: 08xx-xxxx-xxxx atau nama#0000">
+    </div>
+    <div class="field">
+      <label>METODE PEMBAYARAN</label>
+      <select id="mcPayment"><option>Memuat metode pembayaran…</option></select>
+    </div>
+    <div class="order-summary">${summaryLines}\n——————————\nTOTAL: ${fmtRp(total)}</div>
+    <button class="btn gold block" id="submitOrderBtn" onclick="submitOrder()">Kirim Pesanan</button>
+    <p class="note" id="checkoutNote">Pesanan akan diproses lewat payment gateway. Rank/coin dikirim ke akunmu otomatis setelah pembayaran dikonfirmasi.</p>
+  `;
+  overlay.classList.add('show');
+
+  try {
+    const { data: channels, configured } = await apiFetch('/payment-channels');
+    const select = document.getElementById('mcPayment');
+    if (!configured) {
+      select.innerHTML = '<option value="">(Gateway belum dikonfigurasi admin)</option>';
+      document.getElementById('checkoutNote').textContent = 'Payment gateway belum aktif. Pesanan tetap bisa dibuat, admin akan menghubungimu untuk instruksi pembayaran manual.';
+      return;
+    }
+    if (!channels.length) {
+      select.innerHTML = '<option value="">(Tidak ada metode aktif)</option>';
+      return;
+    }
+    select.innerHTML = channels.map(c => `<option value="${c.code}">${c.name}</option>`).join('');
+  } catch (err) {
+    document.getElementById('mcPayment').innerHTML = '<option value="">(Gagal memuat metode pembayaran)</option>';
+  }
+}
+
+async function submitOrder(){
+  const username = document.getElementById('mcUsername').value.trim();
+  const contact = document.getElementById('mcContact').value.trim();
+  const methodSelect = document.getElementById('mcPayment');
+  const method = methodSelect ? methodSelect.value : '';
+
+  if(!username || !contact){
+    alert('Isi username Minecraft dan kontak terlebih dahulu ya.');
+    return;
+  }
+
+  const items = Object.entries(cart).map(([id, it]) => ({
+    id: it.ref.id,
+    mode: it.ref.mode,
+    qty: it.ref.type === 'coin' ? (it.ref.qty || it.qty) : it.qty,
+  }));
+
+  const btn = document.getElementById('submitOrderBtn');
+  btn.disabled = true;
+  btn.textContent = 'Memproses…';
+
+  try {
+    const result = await apiFetch('/checkout', {
+      method: 'POST',
+      body: JSON.stringify({ items, username, contact, method }),
+    });
+
+    if (result.mode === 'gateway' && result.checkoutUrl) {
+      document.getElementById('modalTitle').textContent = 'MENGALIHKAN...';
+      document.getElementById('modalBody').innerHTML = `
+        <div class="success">
+          <p>Pesanan <b>${result.merchantRef}</b> dibuat. Mengalihkan ke halaman pembayaran…</p>
+        </div>
+      `;
+      cart = {};
+      resetRankButtons();
+      syncCart();
+      window.location.href = result.checkoutUrl;
+      return;
+    }
+
+    // manual fallback mode
+    document.getElementById('modalTitle').textContent = 'PESANAN TERKIRIM';
+    document.getElementById('modalBody').innerHTML = `
+      <div class="success">
+        <div class="ok">✅</div>
+        <h4>PESANAN DIBUAT</h4>
+        <p>Kode pesananmu:</p>
+        <div class="code">${result.merchantRef}</div>
+        <p>${result.message || 'Simpan kode ini dan kirim ke admin untuk instruksi pembayaran.'}</p>
+        <button class="btn ghost block" style="margin-top:16px;" onclick="closeCheckout()">Tutup</button>
+      </div>
+    `;
+    cart = {};
+    resetRankButtons();
+    syncCart();
+  } catch (err) {
+    alert(err.message || 'Gagal membuat pesanan. Coba lagi.');
+    btn.disabled = false;
+    btn.textContent = 'Kirim Pesanan';
+  }
+}
+
+function resetRankButtons(){
+  PRODUCTS.rank.forEach(r => {
+    const btn = document.getElementById('btn-'+r.id);
+    if(btn){ btn.textContent = '+ Tambah ke Keranjang'; btn.classList.remove('added'); }
+    const btnMonthly = document.getElementById('btn-'+r.id+'-monthly');
+    if(btnMonthly){ btnMonthly.textContent = '+ Tambah ke Keranjang'; btnMonthly.classList.remove('added'); }
+  });
+}
+
+function closeCheckout(){
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+function openReportModal(type){
+  const overlay = document.getElementById('modalOverlay');
+  const title = type === 'bug' ? '🐛 LAPORAN BUG' : '💡 SARAN / UPDATE';
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = `
+    <div class="field">
+      <label>USERNAME / DISCORD</label>
+      <input type="text" id="reportName" placeholder="Siapa nama kamu?">
+    </div>
+    <div class="field">
+      <label>${type === 'bug' ? 'DESKRIPSI BUG' : 'SARAN ATAU UPDATE'}</label>
+      <textarea id="reportDesc" placeholder="${type === 'bug' ? 'Jelaskan bug apa yang terjadi...' : 'Tulis saran atau ide update untuk server...'}" style="width:100%; height:120px; padding:10px; background:var(--panel); border:1px solid var(--line-dark); color:var(--cream); font-family:'IBM Plex Sans', sans-serif; font-size:13px;"></textarea>
+    </div>
+    <div class="field">
+      <label>EMAIL / KONTAK (OPSIONAL)</label>
+      <input type="text" id="reportContact" placeholder="Untuk follow-up">
+    </div>
+    <div style="display:flex; gap:12px; margin-top:20px;">
+      <button class="btn gold block" style="flex:1;" onclick="submitReport('${type}')">KIRIM ${type === 'bug' ? 'BUG' : 'SARAN'}</button>
+      <button class="btn ghost block" style="flex:1;" onclick="closeCheckout()">BATAL</button>
+    </div>
+    <p class="note">Terima kasih telah membantu kami membuat server lebih baik! Laporan kamu akan ditinjau oleh tim admin.</p>
+  `;
+  overlay.classList.add('show');
+}
+
+async function submitReport(type){
+  const name = document.getElementById('reportName').value.trim();
+  const desc = document.getElementById('reportDesc').value.trim();
+  const contact = document.getElementById('reportContact').value.trim();
+  if(!name || !desc){
+    alert('Silakan isi nama dan deskripsi terlebih dahulu.');
+    return;
+  }
+
+  try {
+    const result = await apiFetch('/reports', {
+      method: 'POST',
+      body: JSON.stringify({ type, name, contact, description: desc }),
+    });
+
+    document.getElementById('modalTitle').textContent = 'LAPORAN TERKIRIM';
+    document.getElementById('modalBody').innerHTML = `
+      <div class="success">
+        <div class="ok">✅</div>
+        <h4>${type === 'bug' ? 'BUG DILAPORKAN' : 'SARAN DITERIMA'}</h4>
+        <p>Laporan ID:</p>
+        <div class="code">${result.reportId}</div>
+        <p>Terima kasih ${name}! Laporan kamu sudah kami terima dan akan ditinjau oleh tim admin. Kami sangat menghargai kontribusi kamu untuk membuat server lebih baik.</p>
+        <button class="btn ghost block" style="margin-top:16px;" onclick="closeCheckout()">Tutup</button>
+      </div>
+    `;
+  } catch (err) {
+    alert(err.message || 'Gagal mengirim laporan. Coba lagi.');
+  }
+}
+
+/* ---------- admin panel (real login + real DB via API, full page — not a modal) ---------- */
+function renderAdminPage(){
+  const token = localStorage.getItem('valley_admin_token');
+  if (!token){
+    showAdminLogin();
+    return;
+  }
+  // Verify the stored token is still valid before showing the panel.
+  apiFetch('/admin/products')
+    .then(() => showAdminPanel())
+    .catch(() => { localStorage.removeItem('valley_admin_token'); showAdminLogin(); });
+}
+
+function showAdminLogin(){
+  document.getElementById('adminLoginSection').style.display = '';
+  document.getElementById('adminContentSection').style.display = 'none';
+  const note = document.getElementById('adminLoginNote');
+  note.textContent = 'Login untuk mengatur diskon rank & coin, dan memantau pesanan.';
+  note.style.color = '';
+  document.getElementById('adminUser').value = '';
+  document.getElementById('adminPass').value = '';
+}
+
+function showAdminPanel(){
+  document.getElementById('adminLoginSection').style.display = 'none';
+  document.getElementById('adminContentSection').style.display = '';
+  adminTab = 'rank';
+  document.getElementById('adminTabBtn-rank').classList.add('active');
+  document.getElementById('adminTabBtn-coin').classList.remove('active');
+  document.getElementById('adminTabBtn-orders').classList.remove('active');
+  document.getElementById('adminTabBtn-reports').classList.remove('active');
+  document.getElementById('adminTabIndicator').closest('.rank-tabs').classList.remove('shift-1', 'shift-2', 'shift-3');
+  renderAdminList();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const passInput = document.getElementById('adminPass');
+  if (passInput) passInput.addEventListener('keydown', e => { if (e.key === 'Enter') doAdminLogin(); });
+});
+
+async function doAdminLogin(){
+  const username = document.getElementById('adminUser').value.trim();
+  const password = document.getElementById('adminPass').value;
+  const note = document.getElementById('adminLoginNote');
+  try {
+    const result = await apiFetch('/admin/login', { method:'POST', body: JSON.stringify({ username, password }) });
+    localStorage.setItem('valley_admin_token', result.token);
+    showAdminPanel();
+  } catch (err) {
+    note.textContent = err.message || 'Login gagal.';
+    note.style.color = 'var(--danger)';
+  }
+}
+
+function doAdminLogout(){
+  localStorage.removeItem('valley_admin_token');
+  showAdminLogin();
+}
+
+let adminTab = 'rank';
+let adminTabAnimating = false;
+async function switchAdminTab(tab){
+  if (tab === adminTab || adminTabAnimating) return;
+  adminTabAnimating = true;
+  adminTab = tab;
+  document.getElementById('adminTabBtn-rank').classList.toggle('active', tab === 'rank');
+  document.getElementById('adminTabBtn-coin').classList.toggle('active', tab === 'coin');
+  document.getElementById('adminTabBtn-orders').classList.toggle('active', tab === 'orders');
+  document.getElementById('adminTabBtn-reports').classList.toggle('active', tab === 'reports');
+  const tabsEl = document.getElementById('adminTabIndicator').closest('.rank-tabs');
+  tabsEl.classList.remove('shift-1', 'shift-2', 'shift-3');
+  if (tab === 'coin') tabsEl.classList.add('shift-1');
+  if (tab === 'orders') tabsEl.classList.add('shift-2');
+  if (tab === 'reports') tabsEl.classList.add('shift-3');
+
+  const wrap = document.getElementById('adminListWrap');
+  const list = document.getElementById('adminList');
+  wrap.style.height = wrap.offsetHeight + 'px';
+  list.classList.remove('entering');
+  list.classList.add('leaving');
+  await new Promise(r => setTimeout(r, 200));
+
+  await renderAdminList();
+
+  list.classList.remove('leaving');
+  list.classList.add('entering');
+  requestAnimationFrame(() => { wrap.style.height = list.scrollHeight + 'px'; });
+  setTimeout(() => {
+    list.classList.remove('entering');
+    wrap.style.height = '';
+    adminTabAnimating = false;
+  }, 360);
+}
+
+async function renderAdminList(){
+  const list = document.getElementById('adminList');
+  list.innerHTML = 'Memuat…';
+  try {
+    if (adminTab === 'orders'){
+      const { data: orders } = await apiFetch('/admin/orders');
+      if (!orders.length){
+        list.innerHTML = '<p class="note">Belum ada pesanan.</p>';
+        return;
+      }
+      list.innerHTML = orders.map(o => `
+        <div class="admin-row" style="flex-wrap:wrap;">
+          <div class="ar-name" style="flex:1 1 100%;">
+            <b>${o.merchant_ref}</b> — ${o.mc_username} (${o.contact})
+            <small>${fmtRp(o.subtotal)} · ${o.status}${o.fulfilled ? ' · SUDAH DIKIRIM' : ''}</small>
+          </div>
+          ${o.status === 'PAID' && !o.fulfilled ? `<button class="ar-save" onclick="fulfillOrder('${o.merchant_ref}')">TANDAI DIKIRIM</button>` : ''}
+        </div>
+      `).join('');
+      return;
+    }
+
+    if (adminTab === 'reports'){
+      const { data: reports } = await apiFetch('/admin/reports');
+      if (!reports.length){
+        list.innerHTML = '<p class="note">Belum ada laporan bug atau saran.</p>';
+        return;
+      }
+      list.innerHTML = reports.map(r => `
+        <div class="admin-row" style="flex-wrap:wrap; align-items:flex-start;">
+          <div class="ar-name" style="flex:1 1 100%;">
+            <b>${r.type === 'bug' ? '🐛 BUG' : '💡 SARAN'} — ${r.id}</b>${r.read_flag ? '' : ' <span style="color:var(--gold);">● BARU</span>'}
+            <small>${r.name}${r.contact ? ' · ' + r.contact : ''} · ${new Date(r.created_at * 1000).toLocaleString('id-ID')}</small>
+            <p style="margin:8px 0 0; font-size:13px; color:var(--cream); white-space:pre-wrap;">${r.description}</p>
+          </div>
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            ${!r.read_flag ? `<button class="ar-save" onclick="markReportRead('${r.id}')">TANDAI DIBACA</button>` : ''}
+            <button class="ar-clear" onclick="deleteReport('${r.id}')">HAPUS</button>
+          </div>
+        </div>
+      `).join('');
+      return;
+    }
+
+    const { data } = await apiFetch('/admin/products');
+    const items = data.filter(p => p.type === adminTab);
+    list.innerHTML = items.map(it => {
+      const d = it.discount || {};
+      const priceLabel = it.type === 'rank'
+        ? `${fmtRp(it.price)} / permanen &middot; ${fmtRp(it.priceMonthly)} / bulan`
+        : fmtRp(it.price);
+      return `
+      <div class="admin-row">
+        <div class="ar-name">${it.name}<small>${priceLabel}</small></div>
+        <input type="number" min="0" max="100" placeholder="%" id="adminPct-${it.id}" value="${d.pct || ''}">
+        <input type="text" placeholder="Label" id="adminLabel-${it.id}" value="${d.label || ''}">
+        <button class="ar-save" onclick="setDiscount('${it.id}')">SIMPAN</button>
+        <button class="ar-clear" onclick="clearDiscount('${it.id}')">HAPUS</button>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    if (err.status === 401){
+      localStorage.removeItem('valley_admin_token');
+      showAdminLogin();
+      return;
+    }
+    list.innerHTML = `<p class="note" style="color:var(--danger);">${err.message}</p>`;
+  }
+}
+
+async function setDiscount(productId){
+  const pct = document.getElementById('adminPct-'+productId).value;
+  const label = document.getElementById('adminLabel-'+productId).value;
+  try {
+    await apiFetch('/admin/discount', { method:'POST', body: JSON.stringify({ productId, pct, label }) });
+    await loadProducts();
+    renderRanks();
+    renderCoins();
+    renderAdminList();
+  } catch (err) {
+    alert(err.message || 'Gagal menyimpan diskon.');
+  }
+}
+
+async function clearDiscount(productId){
+  try {
+    await apiFetch('/admin/discount/'+productId, { method:'DELETE' });
+    await loadProducts();
+    renderRanks();
+    renderCoins();
+    renderAdminList();
+  } catch (err) {
+    alert(err.message || 'Gagal menghapus diskon.');
+  }
+}
+
+async function fulfillOrder(merchantRef){
+  try {
+    await apiFetch(`/admin/orders/${merchantRef}/fulfill`, { method:'POST' });
+    renderAdminList();
+  } catch (err) {
+    alert(err.message || 'Gagal menandai pesanan.');
+  }
+}
+
+async function markReportRead(id){
+  try {
+    await apiFetch(`/admin/reports/${id}/read`, { method:'POST' });
+    renderAdminList();
+  } catch (err) {
+    alert(err.message || 'Gagal menandai laporan.');
+  }
+}
+
+async function deleteReport(id){
+  if (!confirm('Hapus laporan ini?')) return;
+  try {
+    await apiFetch(`/admin/reports/${id}`, { method:'DELETE' });
+    renderAdminList();
+  } catch (err) {
+    alert(err.message || 'Gagal menghapus laporan.');
+  }
+}
+
+/* ---------- interactive polish (unchanged) ---------- */
+function createRipple(e) {
+  const btn = e.currentTarget;
+  const ripple = document.createElement('span');
+  const rect = btn.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  const x = e.clientX - rect.left - size / 2;
+  const y = e.clientY - rect.top - size / 2;
+  ripple.style.width = ripple.style.height = size + 'px';
+  ripple.style.left = x + 'px';
+  ripple.style.top = y + 'px';
+  ripple.classList.add('ripple');
+  btn.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 600);
+}
+
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.btn');
+  if (btn) createRipple({ currentTarget: btn, clientX: e.clientX, clientY: e.clientY });
+});
+
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function(e) {
+    e.preventDefault();
+    const target = document.querySelector(this.getAttribute('href'));
+    if(target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => { if(entry.isIntersecting) entry.target.style.opacity = '1'; });
+}, { threshold: 0.1 });
+document.querySelectorAll('.section-head').forEach(el => observer.observe(el));
+
+function animateCartCount() {
+  const count = document.getElementById('cartCount');
+  count.style.animation = 'none';
+  setTimeout(() => { count.style.animation = 'pulse 0.5s ease-in-out'; }, 10);
+}
+const originalSyncCart = syncCart;
+syncCart = function() { originalSyncCart(); animateCartCount(); };
+
+window.addEventListener('scroll', () => {
+  document.querySelectorAll('.card').forEach(card => {
+    const rect = card.getBoundingClientRect();
+    if(rect.top < window.innerHeight * 0.75) card.style.opacity = '1';
+  });
+});
+
+/* ---------- boot ---------- */
+(async function init(){
+  try {
+    await loadProducts();
+  } catch (err) {
+    console.error('Gagal memuat produk dari server:', err);
+  }
+  renderRanks();
+  renderCoins();
+  syncCart();
+})();
+</script>
+
+<!-- Bottom Cart Bar -->
+<div class="cartbar" id="cartbar">
+  <div class="cartbar-text">
+    <span class="label">Item:</span> <span id="barCount">0</span> | <span class="label">Total:</span> <span id="barTotal">Rp0</span>
+  </div>
+  <button class="btn" onclick="openDrawer()">KERANJANG →</button>
+</div>
+
+</body>
+</html>
